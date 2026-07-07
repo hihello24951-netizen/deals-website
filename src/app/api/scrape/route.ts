@@ -69,20 +69,33 @@ async function scrapeBrand(brand: Brand): Promise<ScrapedDeal[]> {
         $(el).find("h1,h2,h3,h4,a").first().text().trim().slice(0, 80) ||
         `${brand.name} Item`;
 
+      let imageSrc = $(el).find("img").first().attr("src") || 
+                     $(el).find("img").first().attr("data-src") || "";
+
+      if (imageSrc && !imageSrc.startsWith("http")) {
+        try {
+          imageSrc = new URL(imageSrc, brand.storeUrl).href;
+        } catch {
+          imageSrc = "";
+        }
+      }
+
+      if (!imageSrc) {
+        imageSrc = `https://placehold.co/400x500/f0f0f0/999999?text=${encodeURIComponent(brand.name)}`;
+      }
+
       deals.push({
         id: `${brand.id}-${deals.length}`,
         brandId: brand.id,
         brandName: brand.name,
         category: brand.category,
         title: titleGuess,
-        image: "/images/placeholder.jpg",
+        image: imageSrc,
         originalPrice,
         discountPercent,
         salePrice,
         sourceUrl: brand.storeUrl,
-      });
-    });
-  } catch (err) {
+      }); catch (err) {
     console.log(`Scrape failed for ${brand.name}:`, err);
   }
 
