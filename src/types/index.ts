@@ -13,6 +13,7 @@ export interface Deal {
   brandName: string;
   category: "Women" | "Men" | "Western" | "Footwear" | "Kids";
   title: string;
+  description?: string;
   image: string;
   originalPrice: number;
   discountPercent: number;

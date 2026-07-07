@@ -2,19 +2,20 @@
 
 import { useState } from "react";
 import { Deal } from "@/types";
-import { ExternalLink } from "lucide-react";
 
 interface ProductCardProps {
   deal: Deal;
-  storeUrl: string;
+  onOpen: (deal: Deal) => void;
 }
 
-export default function ProductCard({ deal, storeUrl }: ProductCardProps) {
+export default function ProductCard({ deal, onOpen }: ProductCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden ring-1 ring-black/5 hover:shadow-lg transition-shadow flex flex-col">
-      {/* Image area with skeleton loader */}
+    <button
+      onClick={() => onOpen(deal)}
+      className="bg-white rounded-2xl overflow-hidden ring-1 ring-black/5 hover:shadow-lg transition-shadow flex flex-col text-left w-full"
+    >
       <div className="relative aspect-[3/4] bg-gray-100">
         {!imageLoaded && (
           <div className="absolute inset-0 animate-pulse bg-gray-200" />
@@ -28,13 +29,11 @@ export default function ProductCard({ deal, storeUrl }: ProductCardProps) {
             imageLoaded ? "opacity-100" : "opacity-0"
           }`}
         />
-        {/* Discount badge */}
         <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-sm">
           {deal.discountPercent}% OFF
         </span>
       </div>
 
-      {/* Info area */}
       <div className="p-3 flex flex-col flex-1">
         <span className="inline-block w-fit text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full mb-1">
           {deal.brandName}
@@ -43,7 +42,7 @@ export default function ProductCard({ deal, storeUrl }: ProductCardProps) {
           {deal.title}
         </p>
 
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2">
           <span className="text-gray-400 text-xs line-through">
             Rs. {deal.originalPrice.toLocaleString()}
           </span>
@@ -51,11 +50,7 @@ export default function ProductCard({ deal, storeUrl }: ProductCardProps) {
             Rs. {deal.salePrice.toLocaleString()}
           </span>
         </div>
-        <a href={storeUrl} target="_blank" rel="noopener noreferrer" className="mt-auto flex items-center justify-center gap-1.5 bg-gray-900 hover:bg-orange-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">
-          Get Deal
-          <ExternalLink size={14} />
-        </a>
       </div>
-    </div>
+    </button>
   );
 }

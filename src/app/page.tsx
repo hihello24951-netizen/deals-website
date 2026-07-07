@@ -17,6 +17,7 @@ export default function Home() {
   const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
   const [liveDeals, setLiveDeals] = useState<Deal[] | null>(null);
   const [loadingLive, setLoadingLive] = useState(true);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
 
   useEffect(() => {
     fetch("/api/deals")
@@ -93,12 +94,19 @@ export default function Home() {
               <ProductCard
                 key={deal.id}
                 deal={deal}
-                storeUrl={brandMap[deal.brandId]?.storeUrl ?? "#"}
+                onOpen={setSelectedDeal}
               />
             ))}
           </div>
         )}
       </div>
+    {selectedDeal && (
+        <ProductModal
+          deal={selectedDeal}
+          storeUrl={brandMap[selectedDeal.brandId]?.storeUrl ?? "#"}
+          onClose={() => setSelectedDeal(null)}
+        />
+      )}
     </main>
   );
 }

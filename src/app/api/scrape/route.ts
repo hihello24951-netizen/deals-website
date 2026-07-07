@@ -17,6 +17,7 @@ interface ScrapedDeal {
   brandName: string;
   category: string;
   title: string;
+  description: string;
   image: string;
   originalPrice: number;
   discountPercent: number;
@@ -84,12 +85,20 @@ async function scrapeBrand(brand: Brand): Promise<ScrapedDeal[]> {
         imageSrc = `https://placehold.co/400x500/f0f0f0/999999?text=${encodeURIComponent(brand.name)}`;
       }
 
+      const descriptionGuess = $(el)
+        .find("p")
+        .first()
+        .text()
+        .trim()
+        .slice(0, 200);
+
       deals.push({
         id: `${brand.id}-${deals.length}`,
         brandId: brand.id,
         brandName: brand.name,
         category: brand.category,
         title: titleGuess,
+        description: descriptionGuess || "No description available.",
         image: imageSrc,
         originalPrice,
         discountPercent,
