@@ -26,14 +26,11 @@ interface ScrapedDeal {
   productUrl: string;
 }
 
-function extractPrice(text: string): number | null {
-  const match = text.replace(/,/g, "").match(/(?:rs\.?|pkr)\s*(\d{3,6})/i);
-  return match ? parseInt(match[1], 10) : null;
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-async function scrapeBrand(brand: Brand): Promise<ScrapedDeal[]> {
-  const deals: ScrapedDeal[] = [];
-
+async function findCandidateProductUrls(brand: Brand): Promise<string[]> {
   try {
     const res = await fetch(brand.storeUrl, {
       headers: { "User-Agent": "Mozilla/5.0" },
@@ -42,88 +39,171 @@ async function scrapeBrand(brand: Brand): Promise<ScrapedDeal[]> {
     const html = await res.text();
     const $ = cheerio.load(html);
 
-    // Heuristic: look for product cards containing both a price-like
-    // number and a "sale"/"off"/"discount" signal nearby.
-    $("[class*='product'], [class*='item'], article, li").each((_, el) => {
-      if (deals.length >= 8) return; // cap per brand to avoid runaway scraping
+    const urls = new Set<string>();
 
-      const blockText = $(el).text();
-      const hasDiscountSignal = /(sale|off|discount|% off)/i.test(blockText);
-      if (!hasDiscountSignal) return;
+    $("a").each((_, el) => {
+      const href = $(el).attr("href");
+      if (!href) return;
+      if (!/\/products?\//i.test(href)) return;
 
-      const prices = blockText.match(/(?:rs\.?|pkr)\s*[\d,]{3,7}/gi);
-      if (!prices || prices.length < 2) return;
-
-      const nums = prices
-        .map((p) => extractPrice(p))
-        .filter((n): n is number => n !== null)
-        .sort((a, b) => b - a);
-
-      const originalPrice = nums[0];
-      const salePrice = nums[nums.length - 1];
-      if (!originalPrice || !salePrice || salePrice >= originalPrice) return;
-
-      const discountPercent = Math.round(
-        ((originalPrice - salePrice) / originalPrice) * 100
-      );
-
-      const titleGuess =
-        $(el).find("h1,h2,h3,h4,a").first().text().trim().slice(0, 80) ||
-        `${brand.name} Item`;
-        
-      
-        
-
-      let imageSrc = $(el).find("img").first().attr("src") || 
-                     $(el).find("img").first().attr("data-src") || "";
-
-      if (imageSrc && !imageSrc.startsWith("http")) {
+      let full = href;
+      if (!full.startsWith("http")) {
         try {
-          imageSrc = new URL(imageSrc, brand.storeUrl).href;
+          full = new URL(href, brand.storeUrl).href;
         } catch {
-          imageSrc = "";
+          return;
         }
       }
-
-      if (!imageSrc) {
-        imageSrc = `https://placehold.co/400x500/f0f0f0/999999?text=${encodeURIComponent(brand.name)}`;
-      }
-
-      const descriptionGuess = $(el)
-        .find("p")
-        .first()
-        .text()
-        .trim()
-        .slice(0, 200);
-        let productUrl = $(el).find("a").first().attr("href") || "";
-      if (productUrl && !productUrl.startsWith("http")) {
-        try {
-          productUrl = new URL(productUrl, brand.storeUrl).href;
-        } catch {
-          productUrl = brand.storeUrl;
-        }
-      }
-      if (!productUrl) {
-        productUrl = brand.storeUrl;
-      }
-
-      deals.push({
-        id: `${brand.id}-${deals.length}`,
-        brandId: brand.id,
-        brandName: brand.name,
-        category: brand.category,
-        title: titleGuess,
-        description: descriptionGuess || "No description available.",
-        image: imageSrc,
-        originalPrice,
-        discountPercent,
-        salePrice,
-        sourceUrl: brand.storeUrl,
-        productUrl,
-      });
+      urls.add(full);
     });
-  } catch (err) {
-    console.log(`Scrape failed for ${brand.name}:`, err);
+
+    return Array.from(urls).slice(0, 10); // cap to 10 candidates per brand
+  } catch {
+    return [];
+  }
+}
+
+async function tryShopifyJson(productUrl: string) {
+  try {
+    const jsonUrl = productUrl.split("?")[0].replace(/\/?$/, "") + ".json";
+    const res = await fetch(jsonUrl, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const product = data.product;
+    if (!product || !product.variants || product.variants.length === 0) return null;
+
+    const variant = product.variants[0];
+    const salePrice = parseFloat(variant.price);
+    const originalPrice = variant.compare_at_price
+      ? parseFloat(variant.compare_at_price)
+      : null;
+
+    if (!salePrice || !originalPrice || originalPrice <= salePrice) return null;
+
+    const discountPercent = Math.round(
+      ((originalPrice - salePrice) / originalPrice) * 100
+    );
+
+    const image =
+      product.images && product.images.length > 0
+        ? product.images[0].src
+        : "";
+
+    return {
+      title: product.title || "",
+      description: stripHtml(product.body_html || "").slice(0, 200),
+      image,
+      originalPrice: Math.round(originalPrice),
+      discountPercent,
+      salePrice: Math.round(salePrice),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function tryJsonLd(productUrl: string) {
+  try {
+    const res = await fetch(productUrl, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    let found: {
+      title: string;
+      description: string;
+      image: string;
+      salePrice: number;
+      originalPrice: number;
+    } | null = null;
+
+    $('script[type="application/ld+json"]').each((_, el) => {
+      if (found) return;
+      try {
+        const raw = $(el).html() || "{}";
+        const json = JSON.parse(raw);
+        const items = Array.isArray(json) ? json : [json];
+
+        for (const item of items) {
+          if (item["@type"] !== "Product" || !item.offers) continue;
+
+          const offers = Array.isArray(item.offers) ? item.offers[0] : item.offers;
+          const price = parseFloat(offers.price);
+          const highPrice = offers.highPrice ? parseFloat(offers.highPrice) : null;
+
+          if (!price || !highPrice || highPrice <= price) continue;
+
+          const img = Array.isArray(item.image) ? item.image[0] : item.image;
+
+          found = {
+            title: item.name || "",
+            description: (item.description || "").slice(0, 200),
+            image: img || "",
+            salePrice: Math.round(price),
+            originalPrice: Math.round(highPrice),
+          };
+        }
+      } catch {
+        // ignore malformed JSON-LD blocks
+      }
+    });
+
+    if (!found) return null;
+
+    const f = found as {
+      title: string;
+      description: string;
+      image: string;
+      salePrice: number;
+      originalPrice: number;
+    };
+
+    const discountPercent = Math.round(
+      ((f.originalPrice - f.salePrice) / f.originalPrice) * 100
+    );
+
+    return { ...f, discountPercent };
+  } catch {
+    return null;
+  }
+}
+
+async function scrapeBrand(brand: Brand): Promise<ScrapedDeal[]> {
+  const deals: ScrapedDeal[] = [];
+  const candidateUrls = await findCandidateProductUrls(brand);
+
+  for (const productUrl of candidateUrls) {
+    if (deals.length >= 8) break;
+
+    let result = await tryShopifyJson(productUrl);
+    if (!result) {
+      result = await tryJsonLd(productUrl);
+    }
+    if (!result) continue;
+
+    deals.push({
+      id: `${brand.id}-${deals.length}`,
+      brandId: brand.id,
+      brandName: brand.name,
+      category: brand.category,
+      title: result.title || `${brand.name} Item`,
+      description: result.description || "No description available.",
+      image: result.image || "",
+      originalPrice: result.originalPrice,
+      discountPercent: result.discountPercent,
+      salePrice: result.salePrice,
+      sourceUrl: brand.storeUrl,
+      productUrl,
+    });
+
+    await new Promise((r) => setTimeout(r, 300)); // polite delay between product fetches
   }
 
   return deals;
