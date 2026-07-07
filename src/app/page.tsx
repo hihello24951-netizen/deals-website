@@ -7,7 +7,7 @@ import ProductCard from "@/components/ProductCard";
 import brandsData from "../../data/brands.json";
 import fallbackDealsData from "../../data/deals.json";
 import { Brand, Deal } from "@/types";
-
+import ProductModal from "@/components/ProductModal";
 const brands = brandsData as Brand[];
 
 export default function Home() {
