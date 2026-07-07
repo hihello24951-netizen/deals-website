@@ -9,7 +9,6 @@ import fallbackDealsData from "../../data/deals.json";
 import { Brand, Deal } from "@/types";
 
 const brands = brandsData as Brand[];
-const fallbackDeals = fallbackDealsData as Deal[];
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,17 +22,15 @@ export default function Home() {
     fetch("/api/deals")
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.deals && data.deals.length > 0) {
-          setLiveDeals(data.deals);
-        }
+        setLiveDeals(data.deals || []);
       })
       .catch(() => {
-        // silently fall back to mock data
+        setLiveDeals([]);
       })
       .finally(() => setLoadingLive(false));
   }, []);
 
-  const deals = liveDeals ?? fallbackDeals;
+  const deals = liveDeals ?? [];
 
   const brandMap = useMemo(() => {
     const map: Record<string, Brand> = {};
@@ -81,7 +78,7 @@ export default function Home() {
           </h2>
           {!loadingLive && (
             <span className="text-xs text-gray-400">
-              {liveDeals ? "Live prices" : "Showing sample data"}
+              Live prices only
             </span>
           )}
         </div>
