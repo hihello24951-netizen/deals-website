@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useDeferredValue } from "react";
 import Navbar from "@/components/Navbar";
 import BrandGrid from "@/components/BrandGrid";
 import ProductCard from "@/components/ProductCard";
@@ -13,6 +13,7 @@ const fallbackDeals = fallbackDealsData as Deal[];
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
   const [liveDeals, setLiveDeals] = useState<Deal[] | null>(null);
@@ -47,13 +48,13 @@ export default function Home() {
       const matchesBrand =
         !selectedBrandId || deal.brandId === selectedBrandId;
       const matchesSearch =
-        searchQuery.trim() === "" ||
-        deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        deal.brandName.toLowerCase().includes(searchQuery.toLowerCase());
+        deferredSearchQuery.trim() === "" ||
+        deal.title.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+        deal.brandName.toLowerCase().includes(deferredSearchQuery.toLowerCase());
 
       return matchesCategory && matchesBrand && matchesSearch;
     });
-  }, [deals, activeCategory, selectedBrandId, searchQuery]);
+  }, [deals, activeCategory, selectedBrandId, deferredSearchQuery]);
 
   return (
     <main className="min-h-screen bg-gray-50">
