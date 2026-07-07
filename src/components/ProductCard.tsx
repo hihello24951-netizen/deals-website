@@ -1,19 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Deal } from "@/types";
 
 interface ProductCardProps {
   deal: Deal;
-  onOpen: (deal: Deal) => void;
 }
 
-export default function ProductCard({ deal, onOpen }: ProductCardProps) {
+export default function ProductCard({ deal }: ProductCardProps) {
+  const router = useRouter();
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <button
-      onClick={() => onOpen(deal)}
+      onClick={() => router.push(`/product/${deal.id}`)}
       className="bg-white rounded-2xl overflow-hidden ring-1 ring-black/5 hover:shadow-lg transition-shadow flex flex-col text-left w-full"
     >
       <div className="relative aspect-[3/4] bg-gray-100">
