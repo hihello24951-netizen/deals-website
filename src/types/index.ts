@@ -18,4 +18,5 @@ export interface Deal {
   originalPrice: number;
   discountPercent: number;
   salePrice: number;
+  productUrl?: string;
 }

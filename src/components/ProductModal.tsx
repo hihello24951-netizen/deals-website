@@ -74,7 +74,7 @@ export default function ProductModal({ deal, storeUrl, onClose }: ProductModalPr
           </div>
 
           
-            href={storeUrl}
+          <a   href={deal.productUrl || storeUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-orange-500 text-white font-semibold py-3.5 rounded-xl transition-colors w-full"

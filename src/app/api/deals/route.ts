@@ -27,10 +27,12 @@ export async function GET() {
           brandName: item.brandName,
           category: item.category,
           title: item.title,
+          description: item.description,
           image: item.image,
           originalPrice: item.originalPrice,
           discountPercent: item.discountPercent,
           salePrice: item.salePrice,
+          productUrl: item.productUrl,
         });
       }
     }

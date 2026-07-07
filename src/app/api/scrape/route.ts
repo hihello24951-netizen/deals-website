@@ -23,6 +23,7 @@ interface ScrapedDeal {
   discountPercent: number;
   salePrice: number;
   sourceUrl: string;
+  productUrl: string;
 }
 
 function extractPrice(text: string): number | null {
@@ -69,6 +70,9 @@ async function scrapeBrand(brand: Brand): Promise<ScrapedDeal[]> {
       const titleGuess =
         $(el).find("h1,h2,h3,h4,a").first().text().trim().slice(0, 80) ||
         `${brand.name} Item`;
+        
+      
+        
 
       let imageSrc = $(el).find("img").first().attr("src") || 
                      $(el).find("img").first().attr("data-src") || "";
@@ -91,6 +95,17 @@ async function scrapeBrand(brand: Brand): Promise<ScrapedDeal[]> {
         .text()
         .trim()
         .slice(0, 200);
+        let productUrl = $(el).find("a").first().attr("href") || "";
+      if (productUrl && !productUrl.startsWith("http")) {
+        try {
+          productUrl = new URL(productUrl, brand.storeUrl).href;
+        } catch {
+          productUrl = brand.storeUrl;
+        }
+      }
+      if (!productUrl) {
+        productUrl = brand.storeUrl;
+      }
 
       deals.push({
         id: `${brand.id}-${deals.length}`,
@@ -104,6 +119,7 @@ async function scrapeBrand(brand: Brand): Promise<ScrapedDeal[]> {
         discountPercent,
         salePrice,
         sourceUrl: brand.storeUrl,
+        productUrl,
       });
     });
   } catch (err) {
