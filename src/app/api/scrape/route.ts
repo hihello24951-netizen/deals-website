@@ -95,7 +95,9 @@ async function scrapeBrand(brand: Brand): Promise<ScrapedDeal[]> {
         discountPercent,
         salePrice,
         sourceUrl: brand.storeUrl,
-      }); catch (err) {
+      });
+    });
+  } catch (err) {
     console.log(`Scrape failed for ${brand.name}:`, err);
   }
 
