@@ -29,6 +29,13 @@ export default function Home() {
   }, []);
 
   const deals = liveDeals ?? [];
+  const liveBrandIds = useMemo(() => {
+    return new Set(deals.map((d) => d.brandId));
+  }, [deals]);
+
+  const visibleBrands = useMemo(() => {
+    return brands.filter((b) => liveBrandIds.has(b.id));
+  }, [liveBrandIds]);
 
   const brandMap = useMemo(() => {
     const map: Record<string, Brand> = {};
@@ -61,7 +68,7 @@ export default function Home() {
       />
 
       <BrandGrid
-        brands={brands}
+        brands={visibleBrands}
         activeCategory={activeCategory}
         onBrandClick={setSelectedBrandId}
         selectedBrandId={selectedBrandId}
