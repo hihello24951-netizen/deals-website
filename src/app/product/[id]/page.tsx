@@ -175,7 +175,7 @@ export default function ProductPage() {
             </div>
 
             
-              href={linkTarget}
+           <a    href={linkTarget}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-auto flex items-center justify-center gap-2 bg-gray-900 hover:bg-orange-500 text-white font-semibold py-4 rounded-xl transition-colors w-full"
