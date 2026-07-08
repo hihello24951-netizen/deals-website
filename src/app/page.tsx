@@ -74,16 +74,16 @@ export default function Home() {
         selectedBrandId={selectedBrandId}
       />
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-semibold text-brand tracking-tight">
             {selectedBrandId
               ? `Deals from ${brandMap[selectedBrandId]?.name}`
               : "Trending Deals"}
           </h2>
           {!loadingLive && (
-            <span className="text-xs text-gray-400">
-              Live prices only
+            <span className="text-xs text-muted font-medium">
+              {filteredDeals.length} live {filteredDeals.length === 1 ? "deal" : "deals"}
             </span>
           )}
         </div>
