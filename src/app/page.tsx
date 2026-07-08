@@ -5,9 +5,7 @@ import Navbar from "@/components/Navbar";
 import BrandGrid from "@/components/BrandGrid";
 import ProductCard from "@/components/ProductCard";
 import brandsData from "../../data/brands.json";
-import fallbackDealsData from "../../data/deals.json";
 import { Brand, Deal } from "@/types";
-import ProductModal from "@/components/ProductModal";
 const brands = brandsData as Brand[];
 
 export default function Home() {
@@ -17,7 +15,6 @@ export default function Home() {
   const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
   const [liveDeals, setLiveDeals] = useState<Deal[] | null>(null);
   const [loadingLive, setLoadingLive] = useState(true);
-  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
 
   useEffect(() => {
     fetch("/api/deals")
@@ -91,22 +88,12 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {filteredDeals.map((deal) => (
-              <ProductCard
-                key={deal.id}
-                deal={deal}
-                onOpen={setSelectedDeal}
-              />
+              <ProductCard key={deal.id} deal={deal} />
             ))}
           </div>
         )}
       </div>
-    {selectedDeal && (
-        <ProductModal
-          deal={selectedDeal}
-          storeUrl={brandMap[selectedDeal.brandId]?.storeUrl ?? "#"}
-          onClose={() => setSelectedDeal(null)}
-        />
-      )}
+    
     </main>
   );
 }
