@@ -1,7 +1,7 @@
 export interface Brand {
   id: string;
   name: string;
-  category: "Women" | "Men" | "Western" | "Footwear" | "Kids";
+  category: "Women" | "Men" | "Western" | "Footwear" | "Kids" | "Bags" | "Electronics" | "Grocery" | "Beauty";
   color: string;
   itemsLive: number;
   storeUrl: string;
@@ -16,7 +16,7 @@ export interface Deal {
   id: string;
   brandId: string;
   brandName: string;
-  category: "Women" | "Men" | "Western" | "Footwear" | "Kids";
+  category: "Women" | "Men" | "Western" | "Footwear" | "Kids" | "Bags" | "Electronics" | "Grocery" | "Beauty";
   title: string;
   description?: string;
   image: string;

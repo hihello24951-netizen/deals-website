@@ -9,7 +9,7 @@ interface NavbarProps {
   setActiveCategory: (value: string) => void;
 }
 
-const categories = ["All", "Women", "Men", "Western", "Footwear", "Kids"];
+const  categories = ["All", "Women", "Men", "Western", "Footwear", "Kids", "Bags", "Electronics", "Grocery", "Beauty"];;
 
 export default function Navbar({
   searchQuery,
@@ -22,9 +22,14 @@ export default function Navbar({
       <div className="max-w-6xl mx-auto px-4 py-4">
         {/* Logo */}
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-            Deal<span className="text-orange-500">Hive</span>
-          </h1>
+          <div className="flex items-center gap-2">
+  <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center">
+    <span className="text-orange-400 font-black text-sm">D</span>
+  </div>
+  <h1 className="text-xl font-bold tracking-tight text-gray-900">
+    Deal<span className="text-orange-500">Hive</span>
+  </h1>
+</div>
         </div>
 
         {/* Search Bar */}

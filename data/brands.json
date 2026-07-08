@@ -1,4 +1,5 @@
 [
+  
   { "id": "sana-safinaz", "name": "Sana Safinaz", "category": "Women", "color": "#F5E6E0", "itemsLive": 1245, "storeUrl": "https://www.sanasafinaz.com" },
   { "id": "maria-b", "name": "Maria.B", "category": "Women", "color": "#F0E8F5", "itemsLive": 987, "storeUrl": "https://www.mariab.pk" },
   { "id": "limelight", "name": "Limelight", "category": "Women", "color": "#FCE9EC", "itemsLive": 1605, "storeUrl": "https://limelight.pk" },
@@ -36,5 +37,8 @@
   { "id": "ndure", "name": "Ndure", "category": "Footwear", "color": "#F5F5E5", "itemsLive": 312, "storeUrl": "https://ndure.com" },
   { "id": "mocciani", "name": "Mocciani", "category": "Footwear", "color": "#EEE5F5", "itemsLive": 187, "storeUrl": "https://mocciani.com" },
   { "id": "hush-puppies", "name": "Hush Puppies", "category": "Footwear", "color": "#E5F5EE", "itemsLive": 421, "storeUrl": "https://hushpuppies.com.pk" },
-  { "id": "hopscotch", "name": "Hopscotch", "category": "Kids", "color": "#F5E5EC", "itemsLive": 298, "storeUrl": "https://hopscotch.pk" }
+  { "id": "hopscotch", "name": "Hopscotch", "category": "Kids", "color": "#F5E5EC", "itemsLive": 298, "storeUrl": "https://hopscotch.pk" },
+  { "id": "mistore", "name": "MiStore (Xiaomi)", "category": "Electronics", "color": "#E5E9F5", "itemsLive": 512, "storeUrl": "https://mistore.pk" },
+  { "id": "al-fatah", "name": "Al-Fatah", "category": "Grocery", "color": "#F0F0E5", "itemsLive": 687, "storeUrl": "https://alfatah.pk" },
+  { "id": "hemani", "name": "Hemani Herbals", "category": "Beauty", "color": "#E5F0EA", "itemsLive": 298, "storeUrl": "https://www.wbhemani.com" }
 ]
