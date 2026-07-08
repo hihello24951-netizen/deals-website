@@ -17,24 +17,28 @@ export async function GET() {
 
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     const deals: Deal[] = [];
-    let idCounter = 1;
 
     for (const brandId of Object.keys(parsed)) {
-      for (const item of parsed[brandId]) {
+      parsed[brandId].forEach((item: any, index: number) => {
         deals.push({
-          id: idCounter++,
+          id: `${brandId}-${index}`,
           brandId: item.brandId,
           brandName: item.brandName,
           category: item.category,
           title: item.title,
           description: item.description,
-          image: item.image,
+          image: item.images && item.images.length > 0 ? item.images[0] : "",
+          images: item.images || [],
+          options: item.options || [],
+          productType: item.productType,
+          vendor: item.vendor,
+          tags: item.tags || [],
           originalPrice: item.originalPrice,
           discountPercent: item.discountPercent,
           salePrice: item.salePrice,
           productUrl: item.productUrl,
         });
-      }
+      });
     }
 
     return NextResponse.json({ deals, live: true });

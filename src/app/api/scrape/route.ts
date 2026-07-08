@@ -18,7 +18,11 @@ interface ScrapedDeal {
   category: string;
   title: string;
   description: string;
-  image: string;
+  images: string[];
+  options: { name: string; values: string[] }[];
+  productType: string;
+  vendor: string;
+  tags: string[];
   originalPrice: number;
   discountPercent: number;
   salePrice: number;
@@ -57,7 +61,7 @@ async function findCandidateProductUrls(brand: Brand): Promise<string[]> {
       urls.add(full);
     });
 
-    return Array.from(urls).slice(0, 10); // cap to 10 candidates per brand
+    return Array.from(urls).slice(0, 10);
   } catch {
     return [];
   }
@@ -88,15 +92,30 @@ async function tryShopifyJson(productUrl: string) {
       ((originalPrice - salePrice) / originalPrice) * 100
     );
 
-    const image =
-      product.images && product.images.length > 0
-        ? product.images[0].src
-        : "";
+    const images: string[] = Array.isArray(product.images)
+      ? product.images.map((img: any) => img.src).filter(Boolean)
+      : [];
+
+    const options = Array.isArray(product.options)
+      ? product.options.map((opt: any) => ({
+          name: opt.name,
+          values: opt.values || [],
+        }))
+      : [];
+
+    const tags: string[] =
+      typeof product.tags === "string"
+        ? product.tags.split(",").map((t: string) => t.trim()).filter(Boolean)
+        : [];
 
     return {
       title: product.title || "",
-      description: stripHtml(product.body_html || "").slice(0, 200),
-      image,
+      description: stripHtml(product.body_html || "").slice(0, 1500),
+      images,
+      options,
+      productType: product.product_type || "",
+      vendor: product.vendor || "",
+      tags,
       originalPrice: Math.round(originalPrice),
       discountPercent,
       salePrice: Math.round(salePrice),
@@ -116,13 +135,7 @@ async function tryJsonLd(productUrl: string) {
 
     const html = await res.text();
     const $ = cheerio.load(html);
-    let found: {
-      title: string;
-      description: string;
-      image: string;
-      salePrice: number;
-      originalPrice: number;
-    } | null = null;
+    let found: any = null;
 
     $('script[type="application/ld+json"]').each((_, el) => {
       if (found) return;
@@ -140,12 +153,21 @@ async function tryJsonLd(productUrl: string) {
 
           if (!price || !highPrice || highPrice <= price) continue;
 
-          const img = Array.isArray(item.image) ? item.image[0] : item.image;
+          const imgField = item.image;
+          const images: string[] = Array.isArray(imgField)
+            ? imgField
+            : imgField
+            ? [imgField]
+            : [];
 
           found = {
             title: item.name || "",
-            description: (item.description || "").slice(0, 200),
-            image: img || "",
+            description: (item.description || "").slice(0, 1500),
+            images,
+            options: [],
+            productType: item.category || "",
+            vendor: item.brand?.name || "",
+            tags: [],
             salePrice: Math.round(price),
             originalPrice: Math.round(highPrice),
           };
@@ -157,19 +179,11 @@ async function tryJsonLd(productUrl: string) {
 
     if (!found) return null;
 
-    const f = found as {
-      title: string;
-      description: string;
-      image: string;
-      salePrice: number;
-      originalPrice: number;
-    };
-
     const discountPercent = Math.round(
-      ((f.originalPrice - f.salePrice) / f.originalPrice) * 100
+      ((found.originalPrice - found.salePrice) / found.originalPrice) * 100
     );
 
-    return { ...f, discountPercent };
+    return { ...found, discountPercent };
   } catch {
     return null;
   }
@@ -195,7 +209,11 @@ async function scrapeBrand(brand: Brand): Promise<ScrapedDeal[]> {
       category: brand.category,
       title: result.title || `${brand.name} Item`,
       description: result.description || "No description available.",
-      image: result.image || "",
+      images: result.images && result.images.length > 0 ? result.images : [],
+      options: result.options || [],
+      productType: result.productType || "",
+      vendor: result.vendor || "",
+      tags: result.tags || [],
       originalPrice: result.originalPrice,
       discountPercent: result.discountPercent,
       salePrice: result.salePrice,
@@ -203,7 +221,7 @@ async function scrapeBrand(brand: Brand): Promise<ScrapedDeal[]> {
       productUrl,
     });
 
-    await new Promise((r) => setTimeout(r, 300)); // polite delay between product fetches
+    await new Promise((r) => setTimeout(r, 300));
   }
 
   return deals;
@@ -224,7 +242,7 @@ export async function GET(request: Request) {
       results[brand.id] = deals;
       totalFound += deals.length;
     }
-    await new Promise((r) => setTimeout(r, 500)); // polite delay between brands
+    await new Promise((r) => setTimeout(r, 500));
   }
 
   await redis.set("scraped-deals", JSON.stringify(results));
